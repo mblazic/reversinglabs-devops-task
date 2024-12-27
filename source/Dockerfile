@@ -1,4 +1,3 @@
-
 FROM --platform=$BUILDPLATFORM python:3.13-slim
 
 LABEL MAINTAINER="Marko Blazic" \
