@@ -5,8 +5,8 @@ LABEL MAINTAINER="Marko Blazic" \
 
 WORKDIR /opt/fortune
 
-COPY requirements.txt fortune.py source.py /opt/fortune/
-COPY datafiles /opt/fortune/datafiles
+COPY requirements.txt fortune/fortune.py fortune/source.py /opt/fortune/
+COPY fortune/datafiles /opt/fortune/datafiles
 
 RUN pip3 install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
