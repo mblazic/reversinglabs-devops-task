@@ -42,8 +42,8 @@ rpmbuild -v -bb ~/rpmbuild/SPECS/fortune.spec
 # Remove directories used in the current run, before going further
 rm -rf /tmp/fortune
 
-# Copy application RPM package to /tmp, ready to copy/deploy to other nodes
-cp ~/rpmbuild/RPMS/noarch/* /tmp
+# Copy application RPM package to RPM/RPMS, ready to copy/deploy to other nodes
+cp ~/rpmbuild/RPMS/noarch/* RPM/RPMS
 
 
 exit 0
