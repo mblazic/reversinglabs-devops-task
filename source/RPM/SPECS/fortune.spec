@@ -1,8 +1,5 @@
-%{!?_version: %define _version 1.0.0 }
-%global srcname fortune
-
-Name:           python-%{srcname}
-Version:        %{_version}
+Name:           fortune
+Version:        1.0.0
 Release:        1%{?dist}
 Summary:        A simple self-contained clone of fortune.
 License:        LGPLv3+
@@ -56,41 +53,29 @@ Requires:       python3-%{srcname}-common
 Python3 scripts and resources of the fortune project
 
 %prep
-%autosetup -n %{srcname}-%{_version}
-
-%build
-%{__python3} setup.py bdist_wheel
+%autosetup -n %{name}
 
 %install
-mkdir -p %{buildroot}/usr/bin
-mkdir -p %{buildroot}/%{_sysconfdir}/systemd/system
-cd "%{_builddir}/%{srcname}-%{_version}/dist"
+mkdir -p %{buildroot}%{_unitdir}
+mkdir -p %{buildroot}/opt/%{name}
 
-%{__python3} -m pip download -r requirements.txt -d fortune/usr/
-%{__python3} -m pip install --no-cache-dir --no-index -r requirements.txt --target=%{buildrooot}%{python3_sitelib} --find-links=%{buildroot}/tmp/fortune/source/lib
+%{python3} -m pip download -r requirements.txt -d %{buildroot}/opt/%{name}/lib
+%{python3} -m pip install --no-cache-dir --no-index -r requirements.txt --target=%{buildroot}%{python3_sitelib} --find-links=%{buildroot}/opt/%{name}/lib
+cp -r %{_builddir}/%{name}/fortune.py source.py datafiles %{buildroot}/opt/%{name}/
+cp %{_builddir}/%{name}/fortune.service %{buildroot}%{_unitdir}/
 
-
-cp %{_builddir}/%{srcname}-%{_version}/bin/logging.conf %{buildroot}/%{_sysconfdir}/fooapp/logging.conf
-cp %{_builddir}/%{srcname}-%{_version}/share/doc/fooapp/rsyslog/fooapp.conf %{buildroot}/%{_sysconfdir}/rsyslog.d/fooapp.conf
-cp %{_builddir}/%{srcname}-%{_version}/bin/fooapp.py %{buildroot}/usr/bin/fooapp.py
 
 
 %check
-cd "%{_builddir}/%{srcname}-%{_version}"
-%{__python3} setup.py nosetests >/dev/null
+PYTHONPATH=%{buildroot}/usr/lib/python3.9/site-packages/ %{python3} %{buildroot}/opt/fortune/fortune.py nosetests >/dev/null
 
-# Install the systemd service file
-mkdir -p %{buildroot}/%{_unitdir}
-cp ~/rpmbuild/SOURCES/fortune.service %{buildroot}/%{_unitdir}/fortune.service
-
-
-%files
+%files -n python3-%{srcname}-common
 %{_unitdir}/fortune.service
-/tmp/fortune
-#/usr/lib/python*/site-packages/*
 
+%files -n python3-%{srcname}
+/opt/%{name}/*
 
-%post -n python3-%{srcname}
+%post -n %{name}
 systemctl daemon-reload
 
 %changelog

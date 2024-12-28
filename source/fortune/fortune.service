@@ -2,8 +2,8 @@
 Description=Fortune Application
 
 [Service]
-ExecStart=/usr/bin/python3 /tmp/fortune/source/fortune.py
-WorkingDirectory=/tmp/fortune/source
+ExecStart=/usr/bin/python3 /opt/fortune/fortune.py
+WorkingDirectory=/opt/fortune
 User=nobody
 Group=nogroup
 Restart=always
