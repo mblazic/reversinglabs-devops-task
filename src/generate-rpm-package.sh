@@ -14,10 +14,8 @@ sudo dnf install -y rpm-build rpmdevtools
 rpmdev-setuptree
 
 cd "$(dirname "$0")"
-mkdir -p RPM/SPECS
 
 cp requirements.txt fortune/
-
 cp RPM/SPECS/fortune.spec  ~/rpmbuild/SPECS/
 
 cp -r fortune /tmp
@@ -30,7 +28,7 @@ mv fortune-$VERSION.tar.gz ~/rpmbuild/SOURCES/
 rpmbuild -v -bb ~/rpmbuild/SPECS/fortune.spec
 
 rm -rf /tmp/fortune
-cp ~/rpmbuild/RPMS/x86_64/* /tmp
+cp ~/rpmbuild/RPMS/noarch/* /tmp
 
 
 exit 0
