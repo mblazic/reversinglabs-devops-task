@@ -1,0 +1,10 @@
+---
+repo_distribution_major_version: 9
+container_dir: /srv/containers
+
+#packages versions:
+# docker
+docker_node_exporter_version: latest
+docker_cadvisor_version: v0.49.2
+# pip
+pip_docker_version: 7.1.0

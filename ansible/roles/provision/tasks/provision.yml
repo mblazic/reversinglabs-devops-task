@@ -1,0 +1,57 @@
+---
+- name: Set authorized key taken from file
+  authorized_key:
+    state: present
+    user: ec2-user
+    key: "{{ lookup('file', '/tmp/project-fortune.pub') }}"
+
+- name: Copy project private key file to all nodes
+  copy:
+    src: /tmp/project-fortune
+    dest: /root/.ssh/project-fortune
+    mode: '0600'
+
+- name: Update repository cache
+  dnf:
+    update_cache: true
+
+- name: Setup timezone
+  timezone:
+    name: CET
+
+- name: Start and enable services
+  service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - chronyd
+    - rsyslog
+
+- name: Update history file
+  blockinfile:
+    path: "{{ item }}"
+    block: |
+      export HISTTIMEFORMAT='%d.%m.%Y %T '
+      export HISTSIZE=30000
+      export HISTFILESIZE=30000
+      export HISTCONTROL=ignoredups
+  loop:
+     - "/home/ec2-user/.bashrc"
+     - "/root/.bashrc"
+
+- name: Update all packages to their latest version
+  package:
+    name: "*"
+    state: latest
+
+- name: Install additional packages
+  package:
+    name: "{{ packages }}"
+    state: present
+
+- name: Reboot host
+  reboot:
+    connect_timeout: "{{ reboot_connect_timeout }}"
+    post_reboot_delay: "{{ reboot_post_reboot_delay }}"
+    reboot_timeout: "{{ reboot_timeout }}"

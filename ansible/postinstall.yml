@@ -1,0 +1,13 @@
+---
+# Deploy and install frontend stack, controlled with tags:
+  # add_python_fortune
+
+  # ansible-playbook postinstall.yml --tags add_python_fortune --ask-vault-pass
+- name: Installing backend roles
+  hosts: reversinglabs_devops_task_application_nodes
+  remote_user: ec2-user
+  gather_facts: true
+  roles:
+    - { role: roles/backend }
+  become: yes
+  become_user: root

@@ -1,0 +1,114 @@
+services:
+  node-exporter:
+    container_name: node-exporter
+    image: prom/node-exporter:{{ docker_node_exporter_version }}
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.disable-defaults'
+      - '--collector.cpu'
+      - '--collector.meminfo'
+      - '--collector.vmstat'
+      - '--collector.diskstats'
+      - '--collector.processes'
+      - '--collector.filesystem'
+      - '--collector.netstat'
+      - '--collector.netdev'
+      - '--collector.loadavg'
+      - '--collector.os'
+      - '--collector.stat'
+      - '--collector.time'
+      - '--collector.uname'
+    networks:
+      default:
+      docker_internal:
+        aliases:
+          - nodexporter.internal
+    ports:
+      - {% for server in groups['reversinglabs_devops_task_application_nodes'] %}{% if server == inventory_hostname %}{{ hostvars[server]['ansible_facts']['enX0']['ipv4']['address'] }}{% endif %}{% endfor %}:9100:9100/tcp
+    logging:
+      driver: journald
+      options:
+        tag: docker-nodexporter
+    restart: always
+########################################################
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:{{ docker_cadvisor_version }}
+    container_name: cadvisor
+    volumes:
+      - type: bind
+        source: /
+        target: /rootfs
+        read_only: true
+      - type: bind
+        source: /var/run
+        target: /var/run
+        read_only: true
+      - type: bind
+        source: /sys
+        target: /sys
+        read_only: true
+      - type: bind
+        source: /dev/disk/
+        target: /dev/disk/
+        read_only: true
+    command:
+    - "--enable_metrics=cpu,cpuLoad,disk,diskIO,memory,oom_event,network"
+    - "--store_container_labels=false"
+    - "--docker_only=true"
+    networks:
+      default:
+      docker_internal:
+        aliases:
+          - cadvisor.internal
+    ports:
+      - {% for server in groups['reversinglabs_devops_task_application_nodes'] %}{% if server == inventory_hostname %}{{ hostvars[server]['ansible_facts']['enX0']['ipv4']['address'] }}{% endif %}{% endfor %}:8080:8080/tcp
+    logging:
+      driver: journald
+      options:
+        tag: docker-cadvisor
+    restart: always
+########################################################
+  fortune:
+    build: fortune/
+    image: fortune:latest
+    container_name: fortune
+    networks:
+      default:
+      docker_internal:
+        aliases:
+          - fortune.internal
+    ports:
+      - {% for server in groups['reversinglabs_devops_task_application_nodes'] %}{% if server == inventory_hostname %}{{ hostvars[server]['ansible_facts']['enX0']['ipv4']['address'] }}{% endif %}{% endfor %}:5000:5000/tcp
+    logging:
+      driver: journald
+      options:
+        tag: docker-fortune
+    mem_limit: 128m
+    restart: unless-stopped
+########################################################
+networks:
+  docker_internal:
+    name: internal
+    internal: true
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/24
+  default:
+    name: external
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.40.0.0/24

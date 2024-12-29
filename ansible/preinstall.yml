@@ -1,0 +1,15 @@
+---
+# Preinstall mandatory tasks, controlled with tags:
+  # provision
+  # generate_keys
+
+  # ansible-playbook preinstall.yml --tags generate_keys --ask-vault-pass
+  # ansible-playbook preinstall.yml --tags provision --ask-vault-pass
+- name: Run provision roles
+  hosts: reversinglabs_devops_task_application_nodes
+  remote_user: ec2-user
+  gather_facts: true
+  roles:
+    - { role: roles/provision }
+  become: yes
+  become_user: root

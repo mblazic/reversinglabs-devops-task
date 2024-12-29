@@ -1,0 +1,8 @@
+---
+- name: Run RSA key generator
+  import_tasks: genkeys.yml
+  tags: [ 'never', 'generate_keys' ]
+
+- name: Run provision
+  import_tasks: provision.yml
+  tags: [ 'never', 'provision' ]

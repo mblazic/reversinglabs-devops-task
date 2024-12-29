@@ -1,0 +1,4 @@
+---
+- name: Install fortune
+  import_tasks: fortune.yml
+  tags: [ 'never', 'add_python_fortune' ]

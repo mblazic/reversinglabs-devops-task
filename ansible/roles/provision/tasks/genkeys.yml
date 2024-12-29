@@ -1,0 +1,8 @@
+- name: Generate an OpenSSH keypair with the default values (4096 bits, rsa)
+  community.crypto.openssh_keypair:
+    path: /tmp/project-fortune
+    owner: root
+    group: root
+    mode: '0755'
+    force: yes
+  delegate_to: localhost

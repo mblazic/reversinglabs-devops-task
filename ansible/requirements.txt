@@ -1,0 +1,6 @@
+ansible
+# Needed for jinja2 json_query templating
+jmespath
+# Needed for generating AWS EC2 inventory
+botocore
+boto3
