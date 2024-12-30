@@ -14,13 +14,13 @@
     dest: /etc/hosts
 
 - name: Install additional packages
-  package:
+  ansible.builtin.package:
     name:
       - python3-pip
     state: latest
 
 - name: Uninstall packages
-  package:
+  ansible.builtin.package:
     name:
       - python3-requests
     state: absent
