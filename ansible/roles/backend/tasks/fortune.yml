@@ -8,7 +8,7 @@
   register: distro
   run_once: yes
 
-- name: Set frontend proxy servers hosts file
+- name: Set backend nodes hosts file
   ansible.builtin.template:
     src: hosts_file.j2
     dest: /etc/hosts
