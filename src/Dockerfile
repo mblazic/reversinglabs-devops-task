@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM python:3.13-slim
+FROM --platform=$BUILDPLATFORM python:3.13-alpine
 
 LABEL MAINTAINER="Marko Blazic" \
       VERSION="1.0" 
