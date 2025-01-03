@@ -76,8 +76,8 @@ services:
     restart: always
 ########################################################
   fortune:
-    build: fortune/
-    image: fortune:latest
+    # build: fortune/
+    image: {{ ecr_registry_url }}/production/reversinglabs/fortune:latest
     container_name: fortune
     networks:
       default:

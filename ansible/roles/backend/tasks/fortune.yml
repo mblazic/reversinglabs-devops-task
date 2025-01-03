@@ -13,18 +13,6 @@
     src: hosts_file.j2
     dest: /etc/hosts
 
-- name: Install additional packages
-  ansible.builtin.package:
-    name:
-      - python3-pip
-    state: latest
-
-- name: Uninstall packages
-  ansible.builtin.package:
-    name:
-      - python3-requests
-    state: absent
-
 - name: Check whether a package called docker is installed
   ansible.builtin.debug:
     msg: "{{ ansible_facts.packages['docker-ce'] | length }} versions of docker-ce are installed!"
@@ -83,12 +71,6 @@
             name: docker-ce
             state: present
             update_cache: yes
-        
-        - name: Install and upgrade packages
-          pip:
-            name:
-              - docker=={{ pip_docker_version }}
-            executable: pip3
 
         - name: Copy docker related configuration files
           copy:
@@ -146,6 +128,14 @@
     remote_src: no
   loop:
     - { src: 'docker/containers/fortune/', dest: 'fortune/' }
+
+- name: Login to Amazon ECR
+  ansible.builtin.shell: |
+    aws ecr get-login-password --region {{ ecr_region }} | docker login --username AWS --password-stdin {{ ecr_registry_url }}
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+    AWS_DEFAULT_REGION: "{{ ecr_region }}"
 
 - name: Create and start service containers
   community.docker.docker_compose_v2:
