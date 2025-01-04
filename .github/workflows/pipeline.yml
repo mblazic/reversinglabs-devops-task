@@ -1,0 +1,222 @@
+name: reversinglabs-devops-task CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - development
+
+env:
+  ECR_REPOSITORY_PROD: production/reversinglabs/fortune
+  ECR_REPOSITORY_STAGE: stage/reversinglabs/fortune
+  IMAGE_TAG: latest
+  LOCAL_REG_PORT: 5010
+
+jobs:
+  environment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          ./aws/install
+
+      - name: Create AWS ECR repository
+        continue-on-error: true
+        run: |
+          aws ecr create-repository --repository-name production/reversinglabs/fortune --region ${{ secrets.AWS_REGION }}
+          aws ecr create-repository --repository-name stage/reversinglabs/fortune --region ${{ secrets.AWS_REGION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies - Python
+        run: |
+          python -m pip install pytest pytest-flask pytest-cov
+          python -m pip install -r .github/workflows/requirements.txt
+
+      # - name: Snyk check requirements.txt - already included in snyk/actions/docker
+      #   uses: snyk/actions/python@master
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      # - name: Run tests - pytest
+      #   run: |
+      #     pytest .github/workflows/fortune/tests.py --maxfail=1 --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+
+  build:
+    runs-on: ubuntu-latest
+    needs: environment
+    if: ${{ success() }}
+
+    outputs:
+      output1: ${{ steps.login-ecr.outputs.registry }}
+
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5010:5000
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          tags: localhost:${{ env.LOCAL_REG_PORT }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+          context: .github/workflows/
+          push: true
+          provenance: false
+
+      - name: Snyk check docker image for vulnerabilities
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        with:
+          image: localhost:${{ env.LOCAL_REG_PORT }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+
+      - name: Tag and push image to AWS ECR - STAGE
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+          context: .github/workflows/
+          push: true
+          provenance: false
+          build-args: |
+            BASE_IMAGE=localhost:${{ env.LOCAL_REG_PORT }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+
+      - name: Tag and push image to AWS ECR - PROD
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
+          context: .github/workflows/
+          push: true
+          provenance: false
+          build-args: |
+            BASE_IMAGE=localhost:${{ env.LOCAL_REG_PORT }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
+
+  deploy-stage:
+    runs-on: ubuntu-latest
+    needs: [environment, build]
+    if: ${{ success() }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          ./aws/install
+
+      - name: Download AWS Fargate task definition
+        run: |
+          aws ecs describe-task-definition --task-definition reversinglabs-devops-task-definition-stage --query taskDefinition > task-definition-stage.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def-stage
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition-stage.json
+          container-name: fortune-stage
+          image: ${{ needs.build.outputs.output1 }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def-stage.outputs.task-definition }}
+          service: fortune-service-stage
+          cluster: reversinglabs-devops-task
+          run-task-assign-public-IP: ENABLED
+          run-task-subnets: ${{ secrets.FARGATE_SUBNETS }}
+          run-task-security-groups: ${{ secrets.FARGATE_SECURITY_GROUPS }}
+          wait-for-service-stability: true
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: [environment, build, deploy-stage]
+    if: ${{ success() }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          ./aws/install
+
+      - name: Download AWS Fargate task definition
+        run: |
+          aws ecs describe-task-definition --task-definition reversinglabs-devops-task-definition-prod --query taskDefinition > task-definition-prod.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def-prod
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition-prod.json
+          container-name: fortune-prod
+          image: ${{ needs.build.outputs.output1 }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def-prod.outputs.task-definition }}
+          service: fortune-service-prod
+          cluster: reversinglabs-devops-task
+          run-task-assign-public-IP: ENABLED
+          run-task-subnets: ${{ secrets.FARGATE_SUBNETS }}
+          run-task-security-groups: ${{ secrets.FARGATE_SECURITY_GROUPS }}
+          wait-for-service-stability: true
