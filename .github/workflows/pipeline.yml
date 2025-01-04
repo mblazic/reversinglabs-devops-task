@@ -26,7 +26,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # - name: Install AWS CLI
+      # - name: Install AWS CLI - for local run act only
       #   run: |
       #     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       #     unzip awscliv2.zip
@@ -62,8 +62,9 @@ jobs:
     needs: environment
     if: ${{ success() }}
 
-    outputs:
-      output1: ${{ steps.login-ecr.outputs.registry }}
+    # for local run act only
+    # outputs:
+    #   output1: ${{ steps.login-ecr.outputs.registry }}
 
     services:
       registry:
@@ -85,6 +86,8 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: private
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -105,7 +108,6 @@ jobs:
         uses: snyk/actions/docker@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         with:
           image: localhost:${{ env.LOCAL_REG_PORT }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
 
@@ -113,7 +115,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+          tags: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+          # tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
           context: .github/workflows/
           push: true
           provenance: false
@@ -124,7 +127,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
+          tags: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+          # tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
           context: .github/workflows/
           push: true
           provenance: false
@@ -147,7 +151,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # - name: Install AWS CLI
+      # - name: Install AWS CLI - for local run act only
       #   run: |
       #     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       #     unzip awscliv2.zip
@@ -163,7 +167,8 @@ jobs:
         with:
           task-definition: task-definition-stage.json
           container-name: fortune-stage
-          image: ${{ needs.build.outputs.output1 }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+          image: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+          # image: ${{ needs.build.outputs.output1 }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
@@ -192,7 +197,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # - name: Install AWS CLI
+      # - name: Install AWS CLI - for local run act only
       #   run: |
       #     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       #     unzip awscliv2.zip
@@ -208,7 +213,8 @@ jobs:
         with:
           task-definition: task-definition-prod.json
           container-name: fortune-prod
-          image: ${{ needs.build.outputs.output1 }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
+          image: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
+          # image: ${{ needs.build.outputs.output1 }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
