@@ -132,13 +132,13 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64
-          tags: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
+          tags: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
           # tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
           context: ./src
           push: true
           provenance: false
           build-args: |
-            BASE_IMAGE=localhost:${{ env.LOCAL_REG_PORT }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
+            BASE_IMAGE=localhost:${{ env.LOCAL_REG_PORT }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
 
   deploy-stage:
     runs-on: ubuntu-latest
