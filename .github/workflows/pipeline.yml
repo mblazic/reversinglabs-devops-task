@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - development
+    paths:
+      - 'src/**'
 
 env:
   ECR_REPOSITORY_PROD: production/reversinglabs/fortune
@@ -14,6 +16,9 @@ env:
 jobs:
   environment:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src
 
     steps:
       - name: Checkout code
@@ -46,7 +51,7 @@ jobs:
       - name: Install dependencies - Python
         run: |
           python -m pip install pytest pytest-flask pytest-cov
-          python -m pip install -r .github/workflows/requirements.txt
+          python -m pip install -r requirements.txt
 
       # - name: Snyk check requirements.txt - already included in snyk/actions/docker
       #   uses: snyk/actions/python@master
@@ -55,7 +60,7 @@ jobs:
 
       # - name: Run tests - pytest
       #   run: |
-      #     pytest .github/workflows/fortune/tests.py --maxfail=1 --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+      #     pytest fortune/tests.py --maxfail=1 --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
 
   build:
     runs-on: ubuntu-latest
@@ -100,7 +105,7 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           tags: localhost:${{ env.LOCAL_REG_PORT }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
-          context: .github/workflows/
+          context: ./src
           push: true
           provenance: false
 
@@ -117,7 +122,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
           # tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
-          context: .github/workflows/
+          context: ./src
           push: true
           provenance: false
           build-args: |
@@ -129,7 +134,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_STAGE }}:${{ env.IMAGE_TAG }}
           # tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_PROD }}:${{ env.IMAGE_TAG }}
-          context: .github/workflows/
+          context: ./src
           push: true
           provenance: false
           build-args: |
