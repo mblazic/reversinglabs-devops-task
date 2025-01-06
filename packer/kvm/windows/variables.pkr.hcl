@@ -5,12 +5,12 @@ variable "iso_url" {
 
 variable "iso_checksum" {
   type    = string
-  default = "none" #sha256:a6f470ca6d331eb353b815c043e327a347f594f37ff525f17764738fe812852e
+  default = "none"
 }
 
 variable "output_directory" {
   type    = string
-  default = "win10-kvm"
+  default = "output"
 }
 
 variable "disk_size" {
