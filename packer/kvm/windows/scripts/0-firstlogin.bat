@@ -15,9 +15,6 @@ powershell -Command "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force"
 REM Set PowerShell Execution Policy 32 Bit
 powershell -Command "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force"
 
-REM Install chocolatey
-powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
-
 REM Disable network location prompt
 reg add /f "HKLM\System\CurrentControlSet\Control\Network\NewNetworkWindowOff"
 
@@ -51,19 +48,10 @@ reg add "HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpd
 reg add "HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /t REG_DWORD /d 2 /f
 REM Disable a bunch of other things
 REM Stop AppX packages from auto-updating from the store (see https://blogs.technet.microsoft.com/swisspfe/2018/04/13/win10-updates-store-gpos-dualscandisabled-sup-wsus/)
-reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v AutoDownload /t REG_DWORD /d 2 
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate" /v AutoDownload /t REG_DWORD /d 2 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v AutoDownload /t REG_DWORD /d 2 /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate" /v AutoDownload /t REG_DWORD /d 2 /f
 REM Stop third-party "promoted" apps from installing in the current user (see https://blogs.technet.microsoft.com/mniehaus/2015/11/23/seeing-extra-apps-turn-them-off/)
-reg add "HKLM\Software\Policies\Microsoft\Windows\CloudContent /v DisableWindowsConsumerFeatures" /t REG_DWORD /d 1 
-
-REM Install openssh server
-powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0"
-
-REM Enable SSH
-powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Start-Service sshd"
-powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Set-Service -Name sshd -StartupType 'Automatic'"
-powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Get-NetFirewallRule -Name *ssh*"
-powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22"
+reg add "HKLM\Software\Policies\Microsoft\Windows\CloudContent /v DisableWindowsConsumerFeatures" /t REG_DWORD /d 1 /f
 
 REM Enable RDP / Create FW rules
 netsh advfirewall firewall add rule name="Open Port 3389" dir=in action=allow protocol=TCP localport=3389

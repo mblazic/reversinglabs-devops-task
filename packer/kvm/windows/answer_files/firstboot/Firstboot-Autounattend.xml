@@ -48,7 +48,7 @@
     <Computername>*</Computername>
     <OOBE>
       <HideEULAPage>true</HideEULAPage>
-      <NetworkLocation>Private</NetworkLocation>
+      <NetworkLocation>Work</NetworkLocation>
       <ProtectYourPC>2</ProtectYourPC>
       <SkipUserOOBE>true</SkipUserOOBE>
       <SkipMachineOOBE>true</SkipMachineOOBE>

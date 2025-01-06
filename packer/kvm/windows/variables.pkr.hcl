@@ -30,17 +30,12 @@ variable "disk_interface" {
 
 variable "memory_size" {
   type    = string
-  default = "4096"
+  default = "6500"
 }
 
 variable "cpus" {
   type    = string
-  default = "1"
-}
-
-variable "net_device" {
-  type    = string
-  default = "virtio-net"
+  default = "4"
 }
 
 variable "headless" {
@@ -96,9 +91,4 @@ variable "winrm_username" {
 variable "boot_wait" {
   type    = string
   default = "20s"
-}
-
-variable "autounattend" {
-  type    = string
-  default = "./answer_files/10/Autounattend.xml"
 }
