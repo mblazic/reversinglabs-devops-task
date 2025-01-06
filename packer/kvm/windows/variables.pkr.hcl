@@ -1,6 +1,6 @@
 variable "iso_url" {
   type    = string
-  default = "images/win10-base.iso"
+  default = "images/win10-base.iso" #http://download.microsoft.com/download/C/3/9/C399EEA8-135D-4207-92C9-6AAB3259F6EF/10240.16384.150709-1700.TH1_CLIENTENTERPRISEEVAL_OEMRET_X64FRE_EN-US.ISO
 }
 
 variable "iso_checksum" {
@@ -80,7 +80,7 @@ variable "winrm_password" {
 
 variable "winrm_timeout" {
   type    = string
-  default = "30m"
+  default = "120m"
 }
 
 variable "winrm_use_ssl" {

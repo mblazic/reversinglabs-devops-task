@@ -42,13 +42,13 @@
       processorArchitecture="amd64"
       publicKeyToken="31bf3856ad364e35"
       language="neutral" versionScope="nonSxS">
-    <RegisteredOwner>ProactiveLabs</RegisteredOwner>
-    <RegisteredOrganization>ProactiveLabs</RegisteredOrganization>
-    <TimeZone>AUS Eastern Standard Time</TimeZone>
+    <RegisteredOwner>ReversingLabs</RegisteredOwner>
+    <RegisteredOrganization>ReversingLabs</RegisteredOrganization>
+    <TimeZone>Central European Summer Time</TimeZone>
     <Computername>*</Computername>
     <OOBE>
       <HideEULAPage>true</HideEULAPage>
-      <NetworkLocation>Work</NetworkLocation>
+      <NetworkLocation>Private</NetworkLocation>
       <ProtectYourPC>2</ProtectYourPC>
       <SkipUserOOBE>true</SkipUserOOBE>
       <SkipMachineOOBE>true</SkipMachineOOBE>
@@ -66,7 +66,7 @@
   <InputLocale>0c09:00000409</InputLocale>
   <SystemLocale>en-US</SystemLocale>
   <UILanguage>en-US</UILanguage>
-  <UserLocale>en-AU</UserLocale>
+  <UserLocale>en-US</UserLocale>
 </component>
     </settings>
   </unattend>
