@@ -2,6 +2,3 @@
 
 A simple self-contained clone of fortune.
 
-## Install
-
-    placeholder
