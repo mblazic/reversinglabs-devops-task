@@ -35,7 +35,6 @@ source "qemu" "windows_10_kvm" {
   ]
 }
 
-
 build {
   sources = ["source.qemu.windows_10_kvm"]
 

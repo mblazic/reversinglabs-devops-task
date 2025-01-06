@@ -30,12 +30,12 @@ variable "disk_interface" {
 
 variable "memory_size" {
   type    = string
-  default = "6500"
+  default = "4096"
 }
 
 variable "cpus" {
   type    = string
-  default = "4"
+  default = "1"
 }
 
 variable "headless" {
